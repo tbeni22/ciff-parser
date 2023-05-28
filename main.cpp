@@ -21,9 +21,9 @@ char* getCaffBlock(ifstream & file, char & id, long long & length) {
 }
 
 std::ofstream outputFile;
-void fileOutput (unsigned char byte){
+void fileOutput (unsigned char byte) {
     outputFile << byte;
-};
+}
 
 int parseCiff(char* data, long long maxLength) {
     if (maxLength < 37) {
@@ -76,7 +76,7 @@ int parseCiff(char* data, long long maxLength) {
         return -1;
     }
 
-    int dataPosition = tagsPosition + i + 1;
+    int dataPosition = tagsPosition + i;
 
     auto image = new unsigned char[contentSize];
     for (int j = 0; j < contentSize; j++) {
@@ -84,6 +84,8 @@ int parseCiff(char* data, long long maxLength) {
     }
 
     bool success = TooJpeg::writeJpeg(fileOutput, image, width, height);
+
+    delete[] image;
 
     outputFile.close();
     return success ? 0 : -1;
@@ -156,16 +158,20 @@ int main(int argc, char* argv[]) {
     }
     size_t dotPos = jpegFileName.find_last_of('.', jpegFileName.size() - 1);
     jpegFileName.resize(dotPos);
-    if (jpegFileName.empty())
+    if (jpegFileName.empty()) {
+        delete[] flag;
         return -1;
+    }
     jpegFileName += ".jpg";
     cout << jpegFileName << endl;
     outputFile = std::ofstream (jpegFileName.c_str(), std::ios_base::out | std::ios_base::binary);
 
     if (strcmp(flag, "-caff") == 0) {
+        delete[] flag;
         return parseCaff(argv[2]);
     }
     if (strcmp(flag, "-ciff") == 0) {
+        delete[] flag;
         ifstream file(argv[2], ios::in | ios::binary);
         if (!file) {
             cout << "Cannot open file!" << endl;
@@ -186,6 +192,8 @@ int main(int argc, char* argv[]) {
             return -1;
         }
     }
+
+    delete[] flag;
 
     return -1;
 }
