@@ -14,10 +14,13 @@ char* getCaffBlock(ifstream & file, char & id, long long & length) {
 
     file.read(reinterpret_cast<char*>(&length), 8);
 
-    char* data = new char[length];
-    file.read(data, length);
-
-    return data;
+    try {
+        char* data = new char[length];
+        file.read(data, length);
+        return data;
+    } catch (std::bad_alloc &e) {   // memory allocation failed
+        return nullptr;
+    }
 }
 
 std::ofstream outputFile;
@@ -77,17 +80,23 @@ int parseCiff(char* data, long long maxLength) {
 
     int dataPosition = tagsPosition + i;
 
-    auto image = new unsigned char[contentSize];
-    for (int j = 0; j < contentSize; j++) {
-        image[j] = data[dataPosition + j];
+    try {
+        auto image = new unsigned char[contentSize];
+        for (int j = 0; j < contentSize; j++) {
+            image[j] = data[dataPosition + j];
+        }
+
+        bool success = TooJpeg::writeJpeg(fileOutput, image, width, height);
+
+        delete[] image;
+
+        outputFile.close();
+        return success ? 0 : -1;
     }
-
-    bool success = TooJpeg::writeJpeg(fileOutput, image, width, height);
-
-    delete[] image;
-
-    outputFile.close();
-    return success ? 0 : -1;
+    catch (std::bad_alloc &e) {     // memory allocation failed
+        outputFile.close();
+        return -1;
+    }
 }
 
 int parseCaff(char* filePathArg) {
