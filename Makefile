@@ -3,7 +3,7 @@ CFLAGS = -std=c++17 -Wall -Wextra -Werror -Wformat-security -Wstack-protector -f
 
 # Your target and source files
 TARGET = parser
-SRC = main.cpp
+SRC = main.cpp toojpeg.cpp
 
 build: $(TARGET)
 

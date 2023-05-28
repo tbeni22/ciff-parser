@@ -11,3 +11,6 @@
 /.idea/
 # binaries
 /build/
+/cmake-build-debug/
+# test data files
+/data/
