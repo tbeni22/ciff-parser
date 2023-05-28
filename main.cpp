@@ -37,13 +37,12 @@ int parseCiff(char* data, long long maxLength) {
     memcpy(&headerLength, data + 4, sizeof(long long));
     long long contentSize;
     memcpy(&contentSize, data + 12, sizeof(long long));
-    //cout << contentSize << endl;
     long long width;
     memcpy(&width, data + 20, sizeof(long long));
-    cout << width;
+    //cout << width;
     long long height;
     memcpy(&height, data + 28, sizeof(long long));
-    cout << "*" << height << endl;
+    //cout << "*" << height << endl;
 
     if (contentSize != width * height * 3) {
         return -1;
@@ -60,16 +59,16 @@ int parseCiff(char* data, long long maxLength) {
         i++;
         currentChar = captionData[i];
     }
-    cout << caption << endl;
+    //cout << caption << endl;
 
     int tagsPosition = 36 + i + 1;
     char* tagsData = data + tagsPosition;
     for (i = 0; i < headerLength - tagsPosition; i++) {
         currentChar = tagsData[i];
-        if (currentChar != '\0')
+        /*if (currentChar != '\0')
             cout << currentChar;
         else
-            cout << endl;
+            cout << endl;*/
     }
     if (currentChar != '\0') {
         cout << "Tags field not properly terminated!";
@@ -163,7 +162,7 @@ int main(int argc, char* argv[]) {
         return -1;
     }
     jpegFileName += ".jpg";
-    cout << jpegFileName << endl;
+    //cout << jpegFileName << endl;
     outputFile = std::ofstream (jpegFileName.c_str(), std::ios_base::out | std::ios_base::binary);
 
     if (strcmp(flag, "-caff") == 0) {
