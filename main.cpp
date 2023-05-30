@@ -7,13 +7,16 @@
 using namespace std;
 
 // returns the data of the block or nullptr if an error occurred
-char* getCaffBlock(ifstream & file, char & id, long long & length) {
+char* getCaffBlock(ifstream & file, char & id, unsigned long long & length) {
+    // read block id and check if its valid
     file >> id;
     if (id != 1 and id != 2 and id != 3)
         return nullptr;
 
+    // get block length field
     file.read(reinterpret_cast<char*>(&length), 8);
 
+    // read data
     try {
         char* data = new char[length];
         file.read(data, length);
@@ -24,11 +27,13 @@ char* getCaffBlock(ifstream & file, char & id, long long & length) {
 }
 
 std::ofstream outputFile;
+// callback function for jpeg writer
 void fileOutput (unsigned char byte) {
     outputFile << byte;
 }
 
-int parseCiff(char* data, long long maxLength) {
+int parseCiff(char* data, unsigned long long maxLength) {
+    // check
     if (maxLength < 37) {
         return -1;
     }
@@ -36,14 +41,15 @@ int parseCiff(char* data, long long maxLength) {
         return -1;
     }
 
-    long long headerLength;
+    // read numeric headers
+    unsigned long long headerLength;
     memcpy(&headerLength, data + 4, sizeof(long long));
-    long long contentSize;
+    unsigned long long contentSize;
     memcpy(&contentSize, data + 12, sizeof(long long));
-    long long width;
+    unsigned long long width;
     memcpy(&width, data + 20, sizeof(long long));
     //cout << width;
-    long long height;
+    unsigned long long height;
     memcpy(&height, data + 28, sizeof(long long));
     //cout << "*" << height << endl;
 
@@ -51,6 +57,7 @@ int parseCiff(char* data, long long maxLength) {
         return -1;
     }
 
+    // read caption
     string caption = "";
     char* captionData = data + 36;
     int i = 0;
@@ -64,6 +71,7 @@ int parseCiff(char* data, long long maxLength) {
     }
     //cout << caption << endl;
 
+    // read tags portion
     int tagsPosition = 36 + i + 1;
     char* tagsData = data + tagsPosition;
     for (i = 0; i < headerLength - tagsPosition; i++) {
@@ -78,19 +86,23 @@ int parseCiff(char* data, long long maxLength) {
         return -1;
     }
 
+    // determine start position of pixel data in array
     int dataPosition = tagsPosition + i;
 
     try {
+        // copy image data to separate array
         auto image = new unsigned char[contentSize];
         for (int j = 0; j < contentSize; j++) {
             image[j] = data[dataPosition + j];
         }
 
+        // write out jpeg file
         bool success = TooJpeg::writeJpeg(fileOutput, image, width, height);
 
         delete[] image;
 
         outputFile.close();
+        // determine return value, which should be 0 on success
         return success ? 0 : -1;
     }
     catch (std::bad_alloc &e) {     // memory allocation failed
@@ -108,7 +120,9 @@ int parseCaff(char* filePathArg) {
 
     char* data;
     char id;
-    long long length;
+    unsigned long long length;
+
+    // read blocks one-by-one
 
     // header
     data = getCaffBlock(file, id, length);
@@ -154,16 +168,19 @@ int main(int argc, char* argv[]) {
     // heart :)
     //cout << (char)0x03 << endl;
 
+    // get flag from arguments
     char* flag = new char[6];
     strncpy(flag, argv[1], 5);
     flag[5] = '\0';
 
+    // get input filename (and path)
     string jpegFileName = "";
     char currentChar = *argv[2];
     for (int i = 1; currentChar != '\0'; i++) {
         jpegFileName += currentChar;
         currentChar = *(argv[2] + i);
     }
+    // calculate output filename from input
     size_t dotPos = jpegFileName.find_last_of('.', jpegFileName.size() - 1);
     jpegFileName.resize(dotPos);
     if (jpegFileName.empty()) {
@@ -186,10 +203,12 @@ int main(int argc, char* argv[]) {
             return -1;
         }
 
+        // determine file size
         file.seekg(0, std::ios::end);
         std::streampos fileSize = file.tellg();
         file.seekg(0, std::ios::beg);
 
+        // read whole file
         char* fileData = new char[fileSize];
         file.read(fileData, fileSize);
 
